@@ -76,7 +76,7 @@ class SpatialNeuralNet:
             self.X = X
             self.Y = Y
         else:
-            print("No input is provided, assuming this is model will be used for predicting. ")
+            print("No input is provided, assuming the model will be used for predicting only. ")
             hasInput = False
 
         if hasInput:
@@ -121,6 +121,8 @@ class SpatialNeuralNet:
                 if rawData is not None:
                     np.savetxt(workDir+'/test_dataset.txt', self.rawData[indTest,:])
                     np.savetxt(workDir+'/train_dataset.txt', self.rawData[indTrain,:])
+
+
 
 
     def processRawData(self,rawData=None,numColumnsY=1):
@@ -203,6 +205,7 @@ class SpatialNeuralNet:
 
 
     def norm(self, v):
+        #return v
         return (v - self.mean_train_dataset) / self.std_train_dataset
 
     # Build the model
@@ -300,6 +303,16 @@ class SpatialNeuralNet:
             'modelType':self.modelType}
         with open(modelDir+'/config.json', 'w') as outfile:
             json.dump(m, outfile)
+
+        formatted_data = np.concatenate((self.X,self.Y),axis=1)
+        np.savetxt(modelDir+'/formatted_data.txt',formatted_data)
+
+        
+        formatted_data_train = np.concatenate((self.normed_train_data,self.train_labels),axis=1)
+        formatted_data_test = np.concatenate((self.normed_test_data,self.test_labels),axis=1)
+        formatted_data_norm = np.concatenate((formatted_data_train,formatted_data_test),axis=0)
+        np.savetxt(modelDir+'/formatted_data_norm.txt',formatted_data_norm)
+        
 
         print('model saved at ',modelDir)
 
@@ -400,7 +413,7 @@ class SpatialNeuralNet:
             print('errors:  ')
             print(error)
             plt.xlim(0.-lenV*1.2, lenV*1.2)
-            plt.hist(error, facecolor='g') 
+            plt.hist(error, bins=30, facecolor='g') 
             #plt.hist(error, bins=25, facecolor='g') #year built
             #plt.xlim(-100, 100) # year built
             #plt.hist(error, bins=36, facecolor='g') #num of stories
@@ -428,10 +441,12 @@ class SpatialNeuralNet:
 
             if self.writeTmpData:
                 np.savetxt(self.workDir+'/test_predictions.txt', test_predictions)
-                print("Figures are saved in ", self.workDir+'/test_predictions.txt')
+                print("Test predictions are saved in ", self.workDir+'/test_predictions.txt')
 
             trueValues = self.test_labels.flatten()
-            self.plot(trueValues, test_predictions)
+            if self.plotFigs:
+                self.plot(trueValues, test_predictions)
+            return trueValues,test_predictions
 
 
     def test_classification_model(self):
